@@ -1,0 +1,195 @@
+//
+//Napisz program, który realizuje dowolny katalog ale inny niż realizowny na zajęciach/pracy domowej.
+//
+//Katalog ma spełniać następującego wymagania:
+//
+//ma przechowywać obiekty klasy, której jednym z atrybutów będzie unikalny numer (ID),
+//        ma przechowywać dowolną liczbę obiektów, ma możliwość dodawania obiektu, w taki sposób, że obiekt jest dodawany tylko gdy nie ma innego obiektu w katalogu o tym samym numerze ID oraz jest dodawany w kolejności rosnącej/malejącej wybranego atrybutu innego niż ID,
+//        ma możliwość ususwania obiektu o danym ID,
+//        ma możlwiość wyświetlania wszystkich obiektów z katalogu.
+//W celu wyświetlania oraz porównania obiektow należy przeciążyć operatory.
+//
+//W funkcji main() należy:
+//
+//Stworzyć obiekt reprezentujący katalog.
+//Dodać obiekty do katalogu.
+//Wyświetlić katalog.
+//Usunąć obiekty o danym numerze ID.
+//Wyświetlić katalog.
+
+#include <iostream>
+#include <string>
+#include <set>
+
+class Product
+{
+private:
+    int id;
+    std::string name;
+    double price;
+public:
+    Product(int const id, std::string name, double price)
+    : id(id), name(name), price(price)
+    {
+    }
+    ~Product() = default;
+
+    //gettery i settery
+    int getID() const
+    {
+        return id;
+    }
+    std::string getName() const
+    {
+        return name;
+    }
+    double getPrice() const
+    {
+        return price;
+    }
+    void setPrice(double newPrice)
+    {
+        price = newPrice;
+    }
+    void setName(std::string newName)
+    {
+        name = std::move(newName);
+    }
+
+    // przeciążony operator< potrzebny dla std::set
+    bool operator<(const Product& toCompare) const
+    {
+        if (price == toCompare.price)
+        {
+            return name < toCompare.name;
+        }
+        return price < toCompare.price;
+    }
+    // przeciążony operator<< potrzebny do wyświetlania obiektu
+    friend std::ostream& operator<<(std::ostream& out, const Product& outProduct)
+    {
+        return out << "ID: " << outProduct.getID() << ", Name: " << outProduct.getName() << ", Price: " << outProduct.getPrice();
+    }
+};
+class Catalogue
+{
+private:
+    std::set<Product> products;
+public:
+    Catalogue() = default;
+    ~Catalogue() = default;
+
+    // dodawanie obiektu do katalogu w kolejności rosnącej atrybutu price
+    void add(const Product& product)
+    {
+        for (const auto& productInCatalogue : products)
+        {
+            // sprawdzenie czy ID już istnieje w katalogu
+            if (productInCatalogue.getID() == product.getID()) {
+                std::cout << "ID already exists, product ID: " << product.getID() << ", Name: " << product.getName()
+                          << ", Price: " << product.getPrice() << " was not added to the catalogue" << std::endl;
+                return;
+            }
+        }
+        // jeśli katalog jest pusty, dodaj produkt
+        if (products.empty())
+        {
+            products.insert(product);
+            return;
+        }
+        for (auto it = products.begin(); it != products.end(); ++it)
+        {
+            // jeśli cena produktu jest mniejsza od ceny produktu w katalogu, dodaj produkt
+            if (product.getPrice() < it->getPrice())
+            {
+                products.insert(it, product);
+                return;
+            }
+            // jeśli cena produktu jest równa cenie produktu w katalogu, dodaj produkt
+            else if (product.getPrice() == it->getPrice())
+            {
+                    products.insert(it, product);
+                    return;
+            }
+            // jeśli cena produktu jest większa od ceny produktu w katalogu, dodaj produkt na koniec
+            else if (product.getPrice() > it->getPrice())
+            {
+                if (it == --products.end())
+                {
+                    products.insert(product);
+                    return;
+                }
+            }
+        }
+    }
+
+    //ma możlwiość wyświetlania wszystkich obiektów z katalogu.
+    void show() const
+    {
+        if (products.empty())
+        {
+            std::cout << "Catalogue is empty" << std::endl;
+            return;
+        }
+        std::cout << std::endl;
+        std::cout << "Catalogue: " << std::endl;
+        for (const auto& product : products)
+        {
+            std::cout << product << std::endl;
+        }
+        std::cout << std::endl;
+    }
+
+    //ma możliwość ususwania obiektu o danym ID,
+    void remove(int IDnum)
+    {
+        for (const auto& product : products)
+        {
+            if (product.getID() == IDnum)
+            {
+                std::cout << "Product with ID: " << IDnum << " was removed from the catalogue" << std::endl;
+                products.erase(product);
+                return;
+            }
+        }
+
+        std::cout << "Product with ID: " << IDnum << " does not exist" << std::endl;
+    }
+    void remove_all()
+    {
+        products.clear();
+    }
+};
+
+int main()
+{
+    int v;
+    Product p1(1, "milk", 0.9);
+    Product p2(5, "bread", 2.1);
+    Product p3(3, "butter", 3.9);
+    Product p4(8, "cheese", 1.5);
+    Product p1_repeat(1, "milk", 2.5);
+
+    Catalogue catalogue1;
+    catalogue1.add(p1);
+    catalogue1.add(p2);
+    catalogue1.add(p3);
+    catalogue1.add(p4);
+
+    catalogue1.show();
+    catalogue1.add(p1_repeat);
+    catalogue1.show();
+
+    v = 10;
+    catalogue1.remove(v);
+    catalogue1.show();
+
+    v = 1;
+    catalogue1.remove(v);
+    catalogue1.show();
+
+    catalogue1.remove_all();
+    catalogue1.show();
+
+    return 0;
+}
